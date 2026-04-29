@@ -20,12 +20,17 @@ const float SHADOW_BIAS = 0.0007;
 vec3 reconstructViewPos(vec2 uv, float depth) {
     vec4 ndc = vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
     vec4 view = gbufferProjectionInverse * ndc;
-    return view.xyz / view.w;
+    return view.xyz / max(view.w, 1e-6);
 }
 
 float shadowVisibility(vec3 worldPos) {
     vec4 shadowView = shadowModelView * vec4(worldPos, 1.0);
     vec4 shadowClip = shadowProjection * shadowView;
+
+    if (shadowClip.w <= 0.0) {
+        return 1.0;
+    }
+
     vec3 shadowNdc = shadowClip.xyz / shadowClip.w;
     vec3 shadowUv = shadowNdc * 0.5 + 0.5;
 
@@ -43,7 +48,7 @@ void main() {
     vec3 albedo = texture2D(colortex0, texcoord).rgb;
     float depth = texture2D(depthtex0, texcoord).r;
 
-    if (depth >= 1.0) {
+    if (depth > 0.9999) {
         gl_FragColor = vec4(albedo, 1.0);
         return;
     }
@@ -51,6 +56,7 @@ void main() {
     vec3 viewPos = reconstructViewPos(texcoord, depth);
     vec3 worldPos = (gbufferModelViewInverse * vec4(viewPos, 1.0)).xyz;
 
+    // Temporary flat-up normal; replace with G-buffer normal sample when available.
     vec3 N = vec3(0.0, 1.0, 0.0);
     vec3 L = normalize(-sunDirWorld);
 
