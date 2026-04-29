@@ -56,7 +56,7 @@ void main() {
     vec3 viewPos = reconstructViewPos(texcoord, depth);
     vec3 worldPos = (gbufferModelViewInverse * vec4(viewPos, 1.0)).xyz;
 
-    // Temporary flat-up normal; replace with G-buffer normal sample when available.
+    // TODO: Replace with per-pixel normal sampled from the G-buffer (e.g. colortex1).
     vec3 N = vec3(0.0, 1.0, 0.0);
     vec3 L = normalize(-sunDirWorld);
 
